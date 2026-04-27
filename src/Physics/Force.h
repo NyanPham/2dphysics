@@ -6,6 +6,7 @@
 
 struct Force {
     static Vec2 GenerateDragForce(const Particle& paticle, float k);
+    static Vec2 GenerateFrictionForce(const Particle& paticle, float k);
 };
 
 #endif
