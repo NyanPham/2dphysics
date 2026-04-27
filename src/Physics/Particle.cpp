@@ -1,3 +1,33 @@
 #include "Particle.h"
+#include <iostream>
 
-// TODO:
+Particle::Particle(float x, float y, float mass) {
+    this->position = Vec2(x, y);
+    this->mass = mass;
+    std::cout << "Particle constructor called!" << std::endl;
+}
+
+Particle::~Particle() {
+    std::cout << "Particle destructor called!" << std::endl;
+}
+
+void Particle::AddForce(const Vec2& force) {
+    sumForces += force;
+}
+
+void Particle::ClearForces(void) {
+    sumForces = Vec2(0.0, 0.0);
+}
+
+void Particle::Integrate(float dt) {
+    // find the acceleration based on the forces that are being applied and the mass
+    acceleration = sumForces / mass;
+
+    // integrate the acceleration to find the new velocity 
+    velocity += acceleration * dt;
+
+    // integrate the velocity to find the position
+    position += velocity * dt;
+
+    ClearForces();
+}
