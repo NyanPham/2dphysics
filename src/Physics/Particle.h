@@ -13,6 +13,7 @@ struct Particle {
     Vec2 sumForces;
 
     float mass;
+    float invMass;
 
     Particle(float x, float y, float mass); 
     ~Particle();
