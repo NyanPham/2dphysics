@@ -10,17 +10,13 @@ bool Application::IsRunning() {
 void Application::Setup() {
     running = Graphics::OpenWindow();
     
-    // Particle* smallBall= new Particle(50, 100, 1.0);
-    // smallBall->radius = 4;
-    // particles.push_back(smallBall);
+    Particle* smallPlanet = new Particle(200, 200, 1.0);
+    smallPlanet->radius = 6;
+    particles.push_back(smallPlanet);
     
-    // Particle* bigBall= new Particle(200, 100, 3.0);
-    // bigBall->radius = 12;
-    // particles.push_back(bigBall);
-    
-    Particle* particle = new Particle(Graphics::Width() / 2, Graphics::Height() / 2, 3.0);
-    particle->radius = 15;
-    particles.push_back(particle);
+    Particle* bigPlanet= new Particle(500, 500, 20.0);
+    bigPlanet->radius = 20;
+    particles.push_back(bigPlanet);
 }
 
 // Input processing
@@ -109,10 +105,15 @@ void Application::Update() {
         particle->AddForce(pushForce);
 
         // apply the friction force 
-        Vec2 friction = Force::GenerateFrictionForce(*particle, 10.0 * PIXELS_PER_METER);
+        Vec2 friction = Force::GenerateFrictionForce(*particle, 20.0);
         particle->AddForce(friction);
     }
-   
+    
+    // apply gravitational force to our two particles/planets
+    Vec2 attraction = Force::GenerateGravitationalForce(*particles[0], *particles[1], 1000.0, 5, 100);
+    particles[0]->AddForce(attraction);
+    particles[1]->AddForce(-attraction);
+
     // integrate the acceleration and the velocity to find the new position
     for (auto particle: particles) {
         particle->Integrate(deltaTime);
