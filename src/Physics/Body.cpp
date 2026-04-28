@@ -1,30 +1,32 @@
-#include "Particle.h"
+#include "Body.h"
 #include <iostream>
 
-Particle::Particle(float x, float y, float mass) {
+Body::Body(const Shape& shape, float x, float y, float mass) {
+    this->shape = shape.Clone();
     this->position = Vec2(x, y);
     this->mass = mass;
-    if (mass != 0) {
+    if (mass != 0.0) {
         this->invMass = 1.0 / mass;
     } else {
         this->invMass = 0.0;
     }
-    std::cout << "Particle constructor called!" << std::endl;
+    std::cout << "Body constructor called!" << std::endl;
 }
 
-Particle::~Particle() {
-    std::cout << "Particle destructor called!" << std::endl;
+Body::~Body() {
+    delete shape;
+    std::cout << "Body destructor called!" << std::endl;
 }
 
-void Particle::AddForce(const Vec2& force) {
+void Body::AddForce(const Vec2& force) {
     sumForces += force;
 }
 
-void Particle::ClearForces(void) {
+void Body::ClearForces(void) {
     sumForces = Vec2(0.0, 0.0);
 }
 
-void Particle::Integrate(float dt) {
+void Body::Integrate(float dt) {
     // find the acceleration based on the forces that are being applied and the mass
     acceleration = sumForces * invMass;
 
