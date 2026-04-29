@@ -78,18 +78,18 @@ void Application::Update() {
     for (auto body: bodies) {
         body->AddForce(pushForce);
 
-        // apply the drag force 
-        Vec2 drag = Force::GenerateDragForce(*body, 0.001);
-        body->AddForce(drag);
-        
         // apply the weight force 
         Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
         body->AddForce(weight);
+
+        float torque = 200;
+        body->AddTorque(torque);
     }
 
     // integrate the acceleration and the velocity to find the new position
     for (auto body: bodies) {
-        body->Integrate(deltaTime);
+        body->IntegrateLinear(deltaTime);
+        body->IntegrateAngular(deltaTime);
     }
     
     // check the boundary of the window
@@ -118,18 +118,14 @@ void Application::Update() {
 void Application::Render() {
     Graphics::ClearScreen(0xFF0F0721);
 
-    static float angle = 0.0;
-    
     for (auto body: bodies) {
         if (body->shape->GetType() == CIRCLE) {
             CircleShape* circleShape = (CircleShape*) body->shape;
-            Graphics::DrawCircle(body->position.x, body->position.y, circleShape->radius, angle, 0xFFFFFFFF);
+            Graphics::DrawCircle(body->position.x, body->position.y, circleShape->radius, body->rotation, 0xFFFFFFFF);
         } else {
             // TODO: draw other shape
         }
     }
-
-    angle += 0.01;
 
     Graphics::RenderFrame();
 }

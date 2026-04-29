@@ -70,7 +70,7 @@ void Graphics::DrawFillRect(int x, int y, int width, int height, Uint32 color) {
 }
 
 void Graphics::DrawPolygon(int x, int y, const std::vector<Vec2>& vertices, Uint32 color) {
-    for (int i = 0; i < vertices.size(); i++) {
+    for (size_t i = 0; i < vertices.size(); i++) {
         int currIndex = i;
         int nextIndex = (i + 1) % vertices.size();
         lineColor(renderer, vertices[currIndex].x, vertices[currIndex].y, vertices[nextIndex].x, vertices[nextIndex].y, color);
@@ -81,10 +81,10 @@ void Graphics::DrawPolygon(int x, int y, const std::vector<Vec2>& vertices, Uint
 void Graphics::DrawFillPolygon(int x, int y, const std::vector<Vec2>& vertices, Uint32 color) {
     std::vector<short> vx;
     std::vector<short> vy;
-    for (int i = 0; i < vertices.size(); i++) {
+    for (size_t i = 0; i < vertices.size(); i++) {
         vx.push_back(static_cast<int>(vertices[i].x));
     }
-    for (int i = 0; i < vertices.size(); i++) {
+    for (size_t i = 0; i < vertices.size(); i++) {
         vy.push_back(static_cast<int>(vertices[i].y));
     }
     filledPolygonColor(renderer, &vx[0], &vy[0], vertices.size(), color);
