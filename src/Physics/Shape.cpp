@@ -37,15 +37,36 @@ ShapeType PolygonShape::GetType() const {
 }
 
 Shape* PolygonShape::Clone() const {
-    return new PolygonShape(vertices);
+    return new PolygonShape(localVertices);
 }
 
 float PolygonShape::GetMomentOfInertia() const {
     return 0.0;
 }
 
+void PolygonShape::UpdateVertices(float angle, const Vec2& position) {
+    // loop all the vertices, transforming from local to world space
+    for (size_t i = 0; i < localVertices.size(); i++) {
+        // rotate -> translate
+        worldVertices[i] = localVertices[i].Rotate(angle);
+        worldVertices[i] += position;
+    }
+}
+
 BoxShape::BoxShape(float width, float height) {
-    // TODO
+    this->width = width;
+    this->height = height;
+    
+    // load the vertices of the box PolygonShape
+    localVertices.push_back(Vec2(-width / 2.0, -height / 2.0));
+    localVertices.push_back(Vec2(width / 2.0, -height / 2.0));
+    localVertices.push_back(Vec2(width / 2.0, height / 2.0));
+    localVertices.push_back(Vec2(-width / 2.0, height / 2.0));
+
+    worldVertices.push_back(Vec2(-width / 2.0, -height / 2.0));
+    worldVertices.push_back(Vec2(width / 2.0, -height / 2.0));
+    worldVertices.push_back(Vec2(width / 2.0, height / 2.0));
+    worldVertices.push_back(Vec2(-width / 2.0, height / 2.0));
 }
 
 BoxShape::~BoxShape() {

@@ -5,6 +5,8 @@
 #include "Shape.h"
 
 struct Body {
+    bool isColliding = false;
+
     // Linear motion
     Vec2 position;
     Vec2 velocity;
@@ -31,6 +33,8 @@ struct Body {
     Body(const Shape& shape, float x, float y, float mass); 
     ~Body();
 
+    bool IsStatic() const;
+        
     void AddForce(const Vec2& force);
     void AddTorque(float torque);
     void ClearForces(void);
@@ -38,6 +42,8 @@ struct Body {
 
     void IntegrateLinear(float dt);
     void IntegrateAngular(float dt);
+
+    void Update(float dt);
 };
 
 #endif
