@@ -3,6 +3,7 @@
 #include "./Physics/Force.h"
 #include "Physics/CollisionDetection.h"
 #include "Physics/Contact.h"
+#include "Physics/Shape.h"
 #include <SDL2/SDL_mouse.h>
 
 bool Application::IsRunning() {
@@ -13,10 +14,14 @@ bool Application::IsRunning() {
 void Application::Setup() {
     running = Graphics::OpenWindow();
 
-    Body* bigBall = new Body(CircleShape(100), 100, 100, 0.0);
-    Body* smallBall = new Body(CircleShape(50), 500, 100, 1.0);
-    bodies.push_back(bigBall);
-    bodies.push_back(smallBall);
+    Body* floor = new Body(BoxShape(Graphics::Width() - 50, 50), Graphics::Width() / 2.0, Graphics::Height() - 50, 0.0);
+    floor->restitution = 0.2;
+    bodies.push_back(floor);
+
+    Body* bigBox = new Body(BoxShape(200, 200), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 0.0);
+    bigBox->rotation = 1.4;
+    bigBox->restitution = 0.5;
+    bodies.push_back(bigBox);
 }
 
 // Input processing
@@ -58,11 +63,11 @@ void Application::Input() {
                     pushForce.x = 0; 
                 }
                 break;
-            case SDL_MOUSEMOTION:
+            case SDL_MOUSEBUTTONDOWN:
                 int x, y;
                 SDL_GetMouseState(&x, &y);
-                bodies[0]->position.x = x;
-                bodies[0]->position.y = y;
+                Body* box = new Body(BoxShape(50, 50), x, y, 1.0);
+                bodies.push_back(box);
                 break;
         }
     }
@@ -88,11 +93,11 @@ void Application::Update() {
 
     // apply forces to the bodies  
     for (auto body: bodies) {
-        body->AddForce(pushForce);
+        // body->AddForce(pushForce);
 
         // apply the weight force 
-        // Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
-        // body->AddForce(weight);
+        Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
+        body->AddForce(weight);
         //
         // Vec2 wind = Vec2(20.0 * PIXELS_PER_METER, 0.0);
         // body->AddForce(wind);
@@ -116,6 +121,8 @@ void Application::Update() {
             b->isColliding = false;
             Contact contact;
             if (CollisionDetection::IsColliding(a, b, contact)) {
+                contact.ResolveCollision();
+  
                 Graphics::DrawFillCircle(contact.start.x, contact.start.y, 3, 0xFFFF00FF);
                 Graphics::DrawFillCircle(contact.end.x, contact.end.y, 3, 0xFFFF00FF);
                 Graphics::DrawLine(contact.start.x, contact.start.y, contact.start.x + contact.normal.x * 15, contact.start.y + contact.normal.y * 15, 0xFFFF00FF);
@@ -123,7 +130,6 @@ void Application::Update() {
                 a->isColliding = true;
                 b->isColliding = true;
 
-                contact.ResolvePenetration();
             } 
         }
     }
@@ -158,11 +164,11 @@ void Application::Render() {
 
         if (body->shape->GetType() == CIRCLE) {
             CircleShape* circleShape = (CircleShape*) body->shape;
-            Graphics::DrawCircle(body->position.x, body->position.y, circleShape->radius, body->rotation, color);
+            Graphics::DrawFillCircle(body->position.x, body->position.y, circleShape->radius, color);
         } 
         if (body->shape->GetType() == BOX) {
             BoxShape* boxShape = (BoxShape*) body->shape;
-            Graphics::DrawPolygon(body->position.x, body->position.y, boxShape->worldVertices, 0xFFFFFFFF);
+            Graphics::DrawPolygon(body->position.x, body->position.y, boxShape->worldVertices, color);
         }
     }
 

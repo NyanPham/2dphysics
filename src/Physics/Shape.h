@@ -38,6 +38,8 @@ struct PolygonShape: public Shape {
     Shape* Clone() const override;
     float GetMomentOfInertia() const override;
 
+    Vec2 EdgeAt(int index) const;
+    float FindMinSeparation(const PolygonShape* other, Vec2& axis, Vec2& point) const;
     // function to rate and translate the polygon vertices from local space to world space
     void UpdateVertices(float angle, const Vec2& position);
 };

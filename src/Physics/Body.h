@@ -26,7 +26,10 @@ struct Body {
     float invMass;
     float I;
     float invI;
-    
+
+    // coefficient of restitution (elasticity)
+    float restitution;
+
     // pointer to the shape/geometry of this rigid body 
     Shape* shape = nullptr;
 
@@ -39,6 +42,9 @@ struct Body {
     void AddTorque(float torque);
     void ClearForces(void);
     void ClearTorque(void);
+
+    void ApplyImpulse(const Vec2& j);
+    void ApplyImpulse(const Vec2& j, const Vec2& r);
 
     void IntegrateLinear(float dt);
     void IntegrateAngular(float dt);
