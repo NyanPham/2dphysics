@@ -17,6 +17,10 @@ ShapeType CircleShape::GetType() const {
 
 Shape* CircleShape::Clone() const {
     return new CircleShape(radius);
+} 
+
+void CircleShape::UpdateVertices(float angle, const Vec2& position) {
+    return; // circles don't have vertices... nothing to do here
 }
 
 float CircleShape::GetMomentOfInertia() const {

@@ -2,16 +2,14 @@
 #define APPLICATION_H
 
 #include "./Graphics.h"
-#include "./Physics/Body.h"
+#include "./Physics/World.h"
 
 class Application {
     private: 
         bool running = false;
         bool debug = false;
 
-        std::vector<Body*> bodies;
-        Vec2 pushForce = Vec2(0.0, 0.0);
-        
+        World* world;
 
     public:
         Application() = default;

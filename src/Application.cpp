@@ -13,6 +13,8 @@ bool Application::IsRunning() {
 // Setup function (executed once in the beginning)
 void Application::Setup() {
     running = Graphics::OpenWindow();
+    
+    world = new World(-9.8);
 
     Body* floor = new Body(BoxShape(Graphics::Width() - 50, 50), Graphics::Width() / 2.0, Graphics::Height() - 25, 0.0);
     Body* leftWall = new Body(BoxShape(50, Graphics::Width() - 100), 50, Graphics::Height() / 2.0 - 25, 0.0);
@@ -20,15 +22,19 @@ void Application::Setup() {
     floor->restitution = 0.5;
     leftWall->restitution = 0.2;
     rightWall->restitution = 0.2;
-    bodies.push_back(floor);
-    bodies.push_back(leftWall);
-    bodies.push_back(rightWall);
+    world->AddBody(floor);
+    world->AddBody(leftWall);
+    world->AddBody(rightWall);
 
     Body* bigBox = new Body(BoxShape(200, 200), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 0.0);
     bigBox->SetTexture("./assets/crate.png");
-    bigBox->rotation = 1.4;
     bigBox->restitution = 0.7;
-    bodies.push_back(bigBox);
+    bigBox->rotation = 1.4;
+    world->AddBody(bigBox);
+
+    // add a force to all world objects 
+    Vec2 wind = Vec2(0.5 * PIXELS_PER_METER, 0.0);
+    world->AddForce(wind);
 }
 
 // Input processing
@@ -46,32 +52,6 @@ void Application::Input() {
                 if (event.key.keysym.sym == SDLK_d) {
                     debug = !debug;
                 }
-                if (event.key.keysym.sym == SDLK_UP) {
-                    pushForce.y = -50 * PIXELS_PER_METER;
-                }
-                if (event.key.keysym.sym == SDLK_RIGHT) {
-                    pushForce.x = 50 * PIXELS_PER_METER;
-                }
-                if (event.key.keysym.sym == SDLK_DOWN) {
-                    pushForce.y = 50 * PIXELS_PER_METER;
-                }
-                if (event.key.keysym.sym == SDLK_LEFT) {
-                    pushForce.x = -50 * PIXELS_PER_METER;
-                }
-                break;
-            case SDL_KEYUP:
-                if (event.key.keysym.sym == SDLK_UP) {
-                    pushForce.y = 0;
-                }
-                if (event.key.keysym.sym == SDLK_RIGHT) {
-                    pushForce.x = 0;
-                }
-                if (event.key.keysym.sym == SDLK_DOWN) {
-                    pushForce.y = 0;
-                }
-                if (event.key.keysym.sym == SDLK_LEFT) {
-                    pushForce.x = 0; 
-                }
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 int x, y;
@@ -80,27 +60,14 @@ void Application::Input() {
                     Body* ball = new Body(CircleShape(30), x, y, 1.0);
                     ball->SetTexture("./assets/basketball.png");
                     ball->restitution = 0.5;
-                    bodies.push_back(ball);
+                    world->AddBody(ball);
                 }
                 if (event.button.button == SDL_BUTTON_RIGHT) {
                     Body* box = new Body(BoxShape(60, 60), x, y, 1.0);
                     box->SetTexture("./assets/crate.png");
                     box->restitution = 0.2;
-                    bodies.push_back(box);
+                    world->AddBody(box);
                 }
-                // std::vector<Vec2> vertices = {
-                //     Vec2(22, -45),
-                //     Vec2(49, -11),
-                //     Vec2(39, 31),
-                //     Vec2(0, 50),
-                //     Vec2(-39, 31),
-                //     Vec2(-49, -11),
-                //     Vec2(-22, -45),
-                // };
-                // Body* polygon = new Body(PolygonShape(vertices), x, y, 2.0);
-                // polygon->restitution = 0.1;
-                // polygon->friction = 0.7;
-                // bodies.push_back(polygon);
                 break;
         }
     }
@@ -109,6 +76,7 @@ void Application::Input() {
 // Update function (called each frame)
 void Application::Update() {
     Graphics::ClearScreen(0xFF0F0721);
+
     // wait some time until the target frame time is reached
     static int timePreviousFrame;
     int timeToWait = MILLISECS_PER_FRAME - (SDL_GetTicks() - timePreviousFrame);
@@ -123,57 +91,15 @@ void Application::Update() {
 
     // set the time of the current frame to be used in the next frame
     timePreviousFrame = SDL_GetTicks();
-
-    // apply forces to the bodies  
-    for (auto body: bodies) {
-        // body->AddForce(pushForce);
-
-        // apply the weight force 
-        Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
-        body->AddForce(weight);
-
-        // Vec2 wind = Vec2(20.0 * PIXELS_PER_METER, 0.0);
-        // body->AddForce(wind);
-
-        // float torque = 200;
-        // body->AddTorque(torque);
-    }
-
-    // integrate the acceleration and the velocity to find the new position
-    for (auto body: bodies) {
-        body->Update(deltaTime);
-    }
-
-    // check all the rigidbodies with other rigidbodies for collision
-    for (size_t i = 0; i < bodies.size() - 1; i++) {
-        for (size_t j = i + 1; j < bodies.size(); j++) {
-            Body* a = bodies[i];
-            Body* b = bodies[j];
-        
-            a->isColliding = false;
-            b->isColliding = false;
-            Contact contact;
-            if (CollisionDetection::IsColliding(a, b, contact)) {
-                contact.ResolveCollision();
-                
-                if (debug) {
-                    Graphics::DrawFillCircle(contact.start.x, contact.start.y, 3, 0xFFFF00FF);
-                    Graphics::DrawFillCircle(contact.end.x, contact.end.y, 3, 0xFFFF00FF);
-                    Graphics::DrawLine(contact.start.x, contact.start.y, contact.start.x + contact.normal.x * 15, contact.start.y + contact.normal.y * 15, 0xFFFF00FF);
-                }
-
-                a->isColliding = true;
-                b->isColliding = true;
-
-            } 
-        }
-    }
+   
+    // update world bodies (integration, collision detection, etc.)
+    world->Update(deltaTime);
 }
 
 // Render function (called each frame)
 void Application::Render() {
 
-    for (auto body: bodies) {
+    for (auto body: world->GetBodies()) {
         if (body->shape->GetType() == CIRCLE) {
             CircleShape* circleShape = (CircleShape*) body->shape;
             if (!debug && body->texture) {
@@ -205,8 +131,6 @@ void Application::Render() {
 
 // Destroy function to delete objects and close the window
 void Application::Destroy() {
-    for (auto body: bodies) {
-        delete body;
-    }
+    delete world;
     Graphics::CloseWindow();
 }
