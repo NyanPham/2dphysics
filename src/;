@@ -177,7 +177,7 @@ void Application::Render() {
         if (body->shape->GetType() == CIRCLE) {
             CircleShape* circleShape = (CircleShape*) body->shape;
             if (!debug && body->texture) {
-                Graphics::DrawTexture(body->position.x, body->position.y, circleShape->radius * 2, circleShape->radius * 2, body->rotation, body->texture);
+                Graphics::DrawTexture(body->position.x, body->position.y, circleShape->radius * 2, circleShape->radius * 2, body->rotation, body->texture)
             } else {
                 Graphics::DrawCircle(body->position.x, body->position.y, circleShape->radius, body->rotation, 0xFF00FF00);
             }
@@ -192,11 +192,7 @@ void Application::Render() {
         }
         if (body->shape->GetType() == POLYGON) {
             PolygonShape* polygonShape = (PolygonShape*) body->shape;
-            if (!debug) {
-                Graphics::DrawFillPolygon(body->position.x, body->position.y, polygonShape->worldVertices, 0xFF444444);
-            } else {
-                Graphics::DrawPolygon(body->position.x, body->position.y, polygonShape->worldVertices, 0xFF00FF00);
-            }
+            Graphics::DrawPolygon(body->position.x, body->position.y, polygonShape->worldVertices, 0xFF00FF00);
         }
     }
 
