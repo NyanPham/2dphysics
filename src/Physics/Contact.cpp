@@ -20,6 +20,7 @@ void Contact::ResolveCollision() {
 
     // define the elasticity (coefficient of restituion e)
     float e = std::min(a->restitution, b->restitution);
+    float f = std::min(a->friction, b->friction);
 
     // calculate the relative velocity between the two objects
     Vec2 ra = end - a->position;
@@ -29,16 +30,23 @@ void Contact::ResolveCollision() {
 
     const Vec2 vrel = va - vb;
 
-    // calculate the relative velocity along the normal collision vector
-    float vrelDotNormal = vrel.Dot(normal);
-
     // now we proceed to calculate the collision impulse
-    const Vec2 impulseDirection = normal;
-    const float impulseMagnitude = -(1 + e) * vrelDotNormal / ((a->invMass + b->invMass) + (ra.Cross(normal) * ra.Cross(normal) * a->invI) + (rb.Cross(normal) * rb.Cross(normal) * b->invI));
- 
-    Vec2 jn = impulseDirection * impulseMagnitude;
+    float vrelDotNormal = vrel.Dot(normal);
+    const Vec2 impulseDirectionN = normal;
+    const float impulseMagnitudeN = -(1 + e) * vrelDotNormal / ((a->invMass + b->invMass) + (ra.Cross(normal) * ra.Cross(normal) * a->invI) + (rb.Cross(normal) * rb.Cross(normal) * b->invI));
+    Vec2 jN = impulseDirectionN * impulseMagnitudeN;
+    
+    // now we calculate the collision impulse along the tangent
+    Vec2 tangent = normal.Normal();
+    float vrelDotTangent = vrel.Dot(tangent);
+    const Vec2 impulseDirectionT = tangent;
+    const float impulseMagnitudeT = f * -(1 + e) * vrelDotTangent / ((a->invMass + b->invMass) + (ra.Cross(tangent) * ra.Cross(tangent) * a->invI) + (rb.Cross(tangent) * rb.Cross(tangent) * b->invI));
+    Vec2 jT = impulseDirectionT * impulseMagnitudeT; 
+
+    // calculate the final impulse j combining normal and tangent impulses
+    Vec2 j = jN + jT;
 
     // apply the impulse vector to both objects in opposite direction 
-    a->ApplyImpulse(jn, ra);
-    b->ApplyImpulse(-jn, rb);
+    a->ApplyImpulse(j, ra);
+    b->ApplyImpulse(-j, rb);
 }
