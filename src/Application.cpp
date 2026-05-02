@@ -75,10 +75,19 @@ void Application::Input() {
             case SDL_MOUSEBUTTONDOWN:
                 int x, y;
                 SDL_GetMouseState(&x, &y);
-                Body* ball = new Body(CircleShape(30), x, y, 1.0);
-                ball->restitution = 0.5;
-                ball->friction = 0.4;
-                bodies.push_back(ball);
+                std::vector<Vec2> vertices = {
+                    Vec2(22, -45),
+                    Vec2(49, -11),
+                    Vec2(39, 31),
+                    Vec2(0, 50),
+                    Vec2(-39, 31),
+                    Vec2(-49, -11),
+                    Vec2(-22, -45),
+                };
+                Body* polygon = new Body(PolygonShape(vertices), x, y, 2.0);
+                polygon->restitution = 0.1;
+                polygon->friction = 0.7;
+                bodies.push_back(polygon);
                 break;
         }
     }
