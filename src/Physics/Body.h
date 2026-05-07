@@ -53,13 +53,18 @@ struct Body {
 
     void SetTexture(const char* textureFilename);
 
-    void ApplyImpulse(const Vec2& j);
-    void ApplyImpulse(const Vec2& j, const Vec2& r);
+    Vec2 LocalSpaceToWorldSpace(const Vec2 & point) const;
+    Vec2 WorldSpaceToLocalSpace(const Vec2 & point) const;
+
+    void ApplyImpulseLinear(const Vec2& j);
+    void ApplyImpulseAngular(const float j);
+    void ApplyImpulseAtPoint(const Vec2& j, const Vec2& r);
 
     void IntegrateLinear(float dt);
     void IntegrateAngular(float dt);
-
-    void Update(float dt);
+    
+    void IntegrateForces(float dt);
+    void IntegrateVelocities(float dt);
 };
 
 #endif

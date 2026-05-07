@@ -2,6 +2,7 @@
 #include "./Physics/Constants.h"
 #include "./Physics/Force.h"
 #include "Physics/CollisionDetection.h"
+#include "Physics/Constraint.h"
 #include "Physics/Contact.h"
 #include "Physics/Shape.h"
 #include <SDL2/SDL_mouse.h>
@@ -15,26 +16,15 @@ void Application::Setup() {
     running = Graphics::OpenWindow();
     
     world = new World(-9.8);
+    
+    Body* a = new Body(CircleShape(30), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 0.0f);
+    Body* b = new Body(CircleShape(20), a->position.x - 100, a->position.y, 1.0f);
 
-    Body* floor = new Body(BoxShape(Graphics::Width() - 50, 50), Graphics::Width() / 2.0, Graphics::Height() - 25, 0.0);
-    Body* leftWall = new Body(BoxShape(50, Graphics::Width() - 100), 50, Graphics::Height() / 2.0 - 25, 0.0);
-    Body* rightWall = new Body(BoxShape(50, Graphics::Width() - 100), Graphics::Width() - 50, Graphics::Height() / 2.0 - 25, 0.0);
-    floor->restitution = 0.5;
-    leftWall->restitution = 0.2;
-    rightWall->restitution = 0.2;
-    world->AddBody(floor);
-    world->AddBody(leftWall);
-    world->AddBody(rightWall);
+    world->AddBody(a);
+    world->AddBody(b);
 
-    Body* bigBox = new Body(BoxShape(200, 200), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 0.0);
-    bigBox->SetTexture("./assets/crate.png");
-    bigBox->restitution = 0.7;
-    bigBox->rotation = 1.4;
-    world->AddBody(bigBox);
-
-    // add a force to all world objects 
-    Vec2 wind = Vec2(0.5 * PIXELS_PER_METER, 0.0);
-    world->AddForce(wind);
+    JointConstraint* joint = new JointConstraint(a, b, a->position);
+    world->AddConstraint(joint);
 }
 
 // Input processing
@@ -59,7 +49,7 @@ void Application::Input() {
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     Body* ball = new Body(CircleShape(30), x, y, 1.0);
                     ball->SetTexture("./assets/basketball.png");
-                    ball->restitution = 0.5;
+                    ball->restitution = 0.7;
                     world->AddBody(ball);
                 }
                 if (event.button.button == SDL_BUTTON_RIGHT) {

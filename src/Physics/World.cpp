@@ -23,6 +23,14 @@ std::vector<Body*>& World::GetBodies() {
     return bodies;
 }
 
+void World::AddConstraint(Constraint* constraint) {
+    constraints.push_back(constraint);
+}
+
+std::vector<Constraint*>& World::GetConstraints() {
+    return constraints;
+}
+
 void World::AddForce(const Vec2& force) {
     forces.push_back(force);
 }
@@ -39,25 +47,30 @@ void World::Update(float dt) {
         body->AddForce(weight);
    
         // apply forces to all bodies 
-        for (auto force: forces) {
+        for (auto force: forces)
             body->AddForce(force);
-        }
 
         // apply torque to all bodies 
-        for (auto torque: torques) {
+        for (auto torque: torques) 
             body->AddTorque(torque);
-        }
     }
     
-    // update all the bodies in the world (integrating and transforming vertices)
+    // integrate all the forces 
     for (auto body: bodies) {
-        body->Update(dt);
+        body->IntegrateForces(dt);
+    }
+
+    // solve all constraints
+    for (auto& constraint: constraints) {
+        constraint->Solve();
+    }
+
+    for (auto body: bodies) {
+        body->IntegrateVelocities(dt);
     }
 
     // collision detection and resolution for all bodies of the world 
-    for (int n = 0; n < 10; n++) {
-        CheckCollisions();
-    }
+    CheckCollisions();
 }
 
 void World::CheckCollisions() {
