@@ -17,16 +17,51 @@ void Application::Setup() {
     
     world = new World(-9.8);
     
-    Body* a = new Body(CircleShape(30), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 0.0f);
-    Body* b = new Body(CircleShape(20), a->position.x - 100, a->position.y, 1.0f);
+    Body* bob = new Body(CircleShape(5), Graphics::Width() / 2.0, Graphics::Height() / 2.0 - 200, 0.0);
+    Body* head = new Body(CircleShape(25), bob->position.x, bob->position.y + 70, 5.0);
+    Body* torso = new Body(BoxShape(50, 100), head->position.x, head->position.y + 80, 3.0);
+    Body* leftArm = new Body(BoxShape(15, 70), torso->position.x - 32, torso->position.y - 10, 1.0);
+    Body* rightArm = new Body(BoxShape(15, 70), torso->position.x + 32, torso->position.y - 10, 1.0);
+    Body* leftLeg = new Body(BoxShape(20, 90), torso->position.x - 20, torso->position.y + 97, 1.0);
+    Body* rightLeg = new Body(BoxShape(20, 90), torso->position.x + 20, torso->position.y + 97, 1.0);
+    bob->SetTexture("./assets/ragdoll/bob.png");
+    head->SetTexture("./assets/ragdoll/head.png");
+    torso->SetTexture("./assets/ragdoll/torso.png");
+    leftArm->SetTexture("./assets/ragdoll/leftArm.png");
+    rightArm->SetTexture("./assets/ragdoll/rightArm.png");
+    leftLeg->SetTexture("./assets/ragdoll/leftLeg.png");
+    rightLeg->SetTexture("./assets/ragdoll/rightLeg.png");
+    world->AddBody(bob);
+    world->AddBody(head);
+    world->AddBody(torso);
+    world->AddBody(leftArm);
+    world->AddBody(rightArm);
+    world->AddBody(leftLeg);
+    world->AddBody(rightLeg);
 
-    world->AddBody(a);
-    world->AddBody(b);
+    JointConstraint* string = new JointConstraint(bob, head, bob->position);
+    JointConstraint* neck = new JointConstraint(head, torso, head->position + Vec2(0, 25));
+    JointConstraint* leftShoulder = new JointConstraint(torso, leftArm, torso->position + Vec2(-28, -45));
+    JointConstraint* rightShoulder = new JointConstraint(torso, rightArm, torso->position + Vec2(28, -45));
+    JointConstraint* leftHip = new JointConstraint(torso, leftLeg, torso->position + Vec2(-20, 50));
+    JointConstraint* rightHip = new JointConstraint(torso, rightLeg, torso->position + Vec2(20, 50));
+    world->AddConstraint(string);
+    world->AddConstraint(neck);
+    world->AddConstraint(leftShoulder);
+    world->AddConstraint(rightShoulder);
+    world->AddConstraint(leftHip);
+    world->AddConstraint(rightHip);
 
-    JointConstraint* joint = new JointConstraint(a, b, a->position);
-    world->AddConstraint(joint);
+    Body* floor = new Body(BoxShape(Graphics::Width() - 50, 50), Graphics::Width() / 2.0, Graphics::Height() - 50, 0.0);
+    Body* leftWall = new Body(BoxShape(50, Graphics::Height() - 100), 50, Graphics::Height() / 2.0 - 25, 0.0);
+    Body* rightWall = new Body(BoxShape(50, Graphics::Height() - 100), Graphics::Width() - 50, Graphics::Height() / 2.0 - 25, 0.0);
+    floor->restitution = 0.7;
+    leftWall->restitution = 0.2;
+    rightWall->restitution = 0.2;
+    world->AddBody(floor);
+    world->AddBody(leftWall);
+    world->AddBody(rightWall);
 }
-
 // Input processing
 void Application::Input() {
     SDL_Event event;
@@ -44,20 +79,31 @@ void Application::Input() {
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
-                int x, y;
-                SDL_GetMouseState(&x, &y);
                 if (event.button.button == SDL_BUTTON_LEFT) {
+                    int x, y;
+                    SDL_GetMouseState(&x, &y);
                     Body* ball = new Body(CircleShape(30), x, y, 1.0);
                     ball->SetTexture("./assets/basketball.png");
                     ball->restitution = 0.7;
                     world->AddBody(ball);
                 }
                 if (event.button.button == SDL_BUTTON_RIGHT) {
+                    int x, y;
+                    SDL_GetMouseState(&x, &y);
                     Body* box = new Body(BoxShape(60, 60), x, y, 1.0);
                     box->SetTexture("./assets/crate.png");
                     box->restitution = 0.2;
                     world->AddBody(box);
                 }
+                break;
+            case SDL_MOUSEMOTION:
+                int x, y; 
+                SDL_GetMouseState(&x, &y);
+                Vec2 mouse = Vec2(x, y);
+                Body* bob = world->GetBodies()[0];
+                Vec2 direction = (mouse - bob->position).Normalize();
+                float speed = 1.0;
+                bob->position += direction * speed;
                 break;
         }
     }
@@ -88,6 +134,16 @@ void Application::Update() {
 
 // Render function (called each frame)
 void Application::Render() {
+    Body* bob = world->GetBodies()[0];
+    Body* head = world->GetBodies()[1];
+    Graphics::DrawLine(bob->position.x, bob->position.y, head->position.x, head->position.y, 0xFF555555);
+
+    for (auto joint: world->GetConstraints()) {
+        if (debug) {
+            const Vec2 anchorPoint = joint->a->LocalSpaceToWorldSpace(joint->aPoint);
+            Graphics::DrawFillCircle(anchorPoint.x, anchorPoint.y, 3, 0xFF0000FF);
+        }
+    }
 
     for (auto body: world->GetBodies()) {
         if (body->shape->GetType() == CIRCLE) {

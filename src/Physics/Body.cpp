@@ -28,6 +28,7 @@ Body::Body(const Shape& shape, float x, float y, float mass) {
     } else {
         this->invI = 0.0;
     }
+    this->shape->UpdateVertices(rotation, position);
     std::cout << "Body constructor called!" << std::endl;
 }
 
