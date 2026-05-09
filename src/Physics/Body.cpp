@@ -124,8 +124,8 @@ void Body::IntegrateForces(float dt) {
 }
 
 void Body::IntegrateVelocities(float dt) {
-    if (IsStatic()) 
-        return; 
+    // if (IsStatic()) 
+    //     return; 
     
     // integrate the velocity to find the new velocity 
     position += velocity * dt;
