@@ -50,7 +50,16 @@ Shape* PolygonShape::Clone() const {
 }
 
 float PolygonShape::GetMomentOfInertia() const {
-    return 5000;
+    float acc0 = 0;
+    float acc1 = 0;
+    for (size_t i = 0; i < localVertices.size(); i++) {
+        auto a = localVertices[i];
+        auto b = localVertices[(i + 1) % localVertices.size()];
+        auto cross = abs(a.Cross(b));
+        acc0 += cross * (a.Dot(a) + b.Dot(b) + a.Dot(b));
+        acc1 += cross;
+    }
+    return acc0 / 6 / acc1;
 }
 
 Vec2 PolygonShape::EdgeAt(int index) const {
@@ -60,7 +69,7 @@ Vec2 PolygonShape::EdgeAt(int index) const {
     return worldVertices[nextVertex] - worldVertices[currVertex];
 }
 
-float PolygonShape::FindMinSeparation(const PolygonShape* other, Vec2& axis, Vec2& point) const {
+float PolygonShape::FindMinSeparation(const PolygonShape* other, int& indexReferenceEdge, Vec2& supportPoint) const {
     float separation = std::numeric_limits<float>::lowest();
 
     // loop all the vertices of "this" polygon
@@ -84,12 +93,56 @@ float PolygonShape::FindMinSeparation(const PolygonShape* other, Vec2& axis, Vec
        
         if (minSep > separation) {
             separation = minSep;
-            axis = this->EdgeAt(i);
-            point = minVertex;
+            indexReferenceEdge = i;
+            supportPoint = minVertex;
         }
     }
 
     return separation;
+}
+
+int PolygonShape::FindIncidentEdge(const Vec2& normal) const {
+    int indexIncidentEdge;
+    float minProj = std::numeric_limits<float>::max();
+    for (size_t i = 0; i < this->worldVertices.size(); i++) {
+        auto edgeNormal = this->EdgeAt(i).Normal();
+        auto proj = edgeNormal.Dot(normal);
+        if (proj < minProj) {
+            minProj = proj;
+            indexIncidentEdge = (int)i;
+        }
+    }
+
+    return indexIncidentEdge;
+}
+
+
+int PolygonShape::ClipSegmentToLine(const std::vector<Vec2>& contactsIn, std::vector<Vec2>& contactsOut, const Vec2& c0, const Vec2& c1) const {
+    // start with no output points 
+    int numOut = 0;
+
+    // calculate the distance of end points to the line 
+    Vec2 normal = (c1 - c0).Normalize();
+    float dist0 = (contactsIn[0] - c0).Cross(normal);
+    float dist1 = (contactsIn[1] - c0).Cross(normal); 
+    
+    // if the points are behind the plane 
+    if (dist0 <= 0)
+        contactsOut[numOut++] = contactsIn[0];
+    if (dist1 <= 0)
+        contactsOut[numOut++] = contactsIn[1];
+
+    // if the points are on different sides of the plane (one distance is negative and the other is postive) {
+    if (dist0 * dist1 < 0) {
+        float totalDist = dist0 - dist1; 
+
+        // find the intersection using linear interpolation: lerp(start, end) => start + t*(end-start)
+        float t = dist0 / totalDist;
+        Vec2 contact = contactsIn[0] + (contactsIn[1] - contactsIn[0]) * t;
+        contactsOut[numOut] = contact; 
+        numOut++;
+    }
+    return numOut;
 }
 
 void PolygonShape::UpdateVertices(float angle, const Vec2& position) {

@@ -88,7 +88,6 @@ void World::Update(float dt) {
     }
     
     // solve all constraints
-    /*
     for (auto& constraint: constraints) {
         constraint->PreSolve(dt);
     }
@@ -96,7 +95,7 @@ void World::Update(float dt) {
         constraint.PreSolve(dt);
     }
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
         for (auto& constraint: constraints) {
             constraint->Solve();
         }
@@ -110,7 +109,8 @@ void World::Update(float dt) {
     for (auto& constraint: penetrations) {
         constraint.PostSolve();
     }
-    */
+    
+    // integrate all the velocities
     for (auto body: bodies) {
         body->IntegrateVelocities(dt);
     }

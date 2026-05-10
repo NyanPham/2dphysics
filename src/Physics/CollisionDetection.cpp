@@ -57,38 +57,77 @@ bool CollisionDetection::IsCollidingCircleCircle(Body *a, Body *b, std::vector<C
 }
 
 bool CollisionDetection::IsCollidingPolygonPolygon(Body *a, Body *b, std::vector<Contact>& contacts) {
-    const PolygonShape* aPolygonShape = (PolygonShape*) a->shape;
-    const PolygonShape* bPolygonShape = (PolygonShape*) b->shape;
+    PolygonShape* aPolygonShape = (PolygonShape*) a->shape;
+    PolygonShape* bPolygonShape = (PolygonShape*) b->shape;
    
-    Vec2 aAxis, bAxis;
-    Vec2 aPoint, bPoint;
-    float abSeparation = aPolygonShape->FindMinSeparation(bPolygonShape, aAxis, aPoint);
-    float baSeparation = bPolygonShape->FindMinSeparation(aPolygonShape, bAxis, bPoint);
-
+    int aIndexReferenceEdge, bIndexReferenceEdge;
+    Vec2 aSupportPoint, bSupportPoint;
+    float abSeparation = aPolygonShape->FindMinSeparation(bPolygonShape, aIndexReferenceEdge, aSupportPoint);
     if (abSeparation >= 0) {
         return false;
     }
+    float baSeparation = bPolygonShape->FindMinSeparation(aPolygonShape, bIndexReferenceEdge, bSupportPoint);
     if (baSeparation >= 0) {
         return false;
     }
-    
-    Contact contact;
-    contact.a = a;
-    contact.b = b; 
-    
+   
+    PolygonShape* referenceShape;
+    PolygonShape* incidentShape;
+    int indexReferenceEdge;
     if (abSeparation > baSeparation) {
-        contact.depth = -abSeparation;
-        contact.normal = aAxis.Normal();
-        contact.start = aPoint;
-        contact.end = aPoint + contact.normal * contact.depth;
+        referenceShape = aPolygonShape;
+        incidentShape = bPolygonShape;
+        indexReferenceEdge = aIndexReferenceEdge;
     } else {
-        contact.depth = -baSeparation;
-        contact.normal = -bAxis.Normal();
-        contact.start = bPoint - contact.normal * contact.depth;
-        contact.end = bPoint;
+        referenceShape = bPolygonShape;
+        incidentShape = aPolygonShape;
+        indexReferenceEdge = bIndexReferenceEdge;
     }
 
-    contacts.push_back(contact);
+    // find the reference edge based on the index that returned from the function
+    Vec2 referenceEdge = referenceShape->EdgeAt(indexReferenceEdge);       
+    
+    // find the incident edge
+    // for CLIPPING
+    int incidentIndex = incidentShape->FindIncidentEdge(referenceEdge.Normal());
+    int incidentNextIndex = (incidentIndex + 1) % incidentShape->worldVertices.size();
+    Vec2 v0 = incidentShape->worldVertices[incidentIndex];
+    Vec2 v1 = incidentShape->worldVertices[incidentNextIndex];
+    
+    std::vector<Vec2> contactPoints = {v0,v1};
+    std::vector<Vec2> clippedPoints = contactPoints;
+    for (size_t i = 0; i < referenceShape->worldVertices.size(); i++) {
+        if ((int)i == indexReferenceEdge)
+            continue;
+        Vec2 c0 = referenceShape->worldVertices[i];
+        Vec2 c1 = referenceShape->worldVertices[(i + 1) % referenceShape->worldVertices.size()];
+        int numClipped = referenceShape->ClipSegmentToLine(contactPoints, clippedPoints, c0, c1);
+        if (numClipped < 2) 
+            break;
+        
+        contactPoints = clippedPoints;  // make the next contact points the ones that were just clipped 
+    }
+    
+    auto vref = referenceShape->worldVertices[indexReferenceEdge];
+
+    // loop all clipped points, but only consider those where separation is negative 
+    for (auto& vclip: clippedPoints) {
+        float separation = (vclip - vref).Dot(referenceEdge.Normal());
+        if (separation <= 0) {
+            Contact contact; 
+            contact.a = a;
+            contact.b = b;
+            contact.normal = referenceEdge.Normal();
+            contact.start = vclip; 
+            contact.end = vclip + contact.normal * -separation;
+            if (baSeparation >= abSeparation) {
+                std::swap(contact.start, contact.end);  // the start-end points are always from 'a' to 'b'
+                contact.normal *= -1.0;                 // the collision normal is always from 'a' to 'b'
+            }
+
+            contacts.push_back(contact);
+        }
+    }
     return true;
 }
 

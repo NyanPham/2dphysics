@@ -96,7 +96,7 @@ void JointConstraint::PreSolve(const float dt) {
     b->ApplyImpulseAngular(impulses[5]);
 
     // compute the bias term (baumgarte stabilization)
-    const float beta = 0.2f;
+    const float beta = 0.02f;
     float C = (pb - pa).Dot(pb - pa);
     C = std::max(0.0f, C - 0.01f);
     bias = (beta / dt) * C; 
@@ -128,7 +128,8 @@ void JointConstraint::Solve() {
 }
 
 void JointConstraint::PostSolve() {
-
+    // limit the warm starting to reasonable limits 
+    cachedLambda[0] = std::clamp(cachedLambda[0], -10000.0f, 10000.0f);
 }
 
 PenetrationConstraint::PenetrationConstraint(): Constraint(), jacobian(2, 6), cachedLambda(2), bias(0.0f) {
@@ -189,7 +190,7 @@ void PenetrationConstraint::PreSolve(const float dt) {
     // compute the bias term (baumgarte stabilization)
     const float beta = 0.2f;
     float C = (pb - pa).Dot(-n);
-    C = std::min(0.0f, C - 0.01f);
+    C = std::min(0.0f, C + 0.01f);
     
     // calculate relative velocity pre-impulse normal to compute elasticity 
     Vec2 va = a->velocity + Vec2(-a->angularVelocity * ra.y, a->angularVelocity * ra.x);

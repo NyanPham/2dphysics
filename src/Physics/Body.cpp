@@ -14,7 +14,7 @@ Body::Body(const Shape& shape, float x, float y, float mass) {
     this->angularAcceleration = 0.0;
     this->sumForces = Vec2(0, 0);
     this->sumTorque = 0.0;
-    this->restitution = 1.0;
+    this->restitution = 0.6;
     this->friction = 0.7;
     this->mass = mass;
     if (mass != 0.0) {
@@ -124,8 +124,8 @@ void Body::IntegrateForces(float dt) {
 }
 
 void Body::IntegrateVelocities(float dt) {
-    // if (IsStatic()) 
-    //     return; 
+    if (IsStatic()) 
+        return; 
     
     // integrate the velocity to find the new velocity 
     position += velocity * dt;

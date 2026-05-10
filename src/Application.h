@@ -10,6 +10,7 @@ class Application {
         bool debug = false;
 
         World* world;
+        SDL_Texture* bgTexture;
 
     public:
         Application() = default;
